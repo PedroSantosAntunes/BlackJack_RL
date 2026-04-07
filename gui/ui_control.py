@@ -1,4 +1,5 @@
 import tkinter
+import time
 from .settings import set_window_position
 from ..lib import Shoe, Hand, Card
 from table_components import TableComponents
@@ -122,6 +123,12 @@ class GameUI:
                 f"{str(hand.slot)}{str(ind)}"
             ].image = img  # type: ignore
 
+    def display_player_cards_rotate(self, hand: Hand):
+        two_aces = hand.cards[0].label == "A" and hand.cards[1].label == "A"
+        rotate = hand.cards[0].label == "A" and hand.cards[1].label != "A"
+        if two_aces and not self.rules.resplit_aces:
+            rotate = True
+        self.display_player_cards(hand, rotate_last=rotate)
 
     ##########
     ## Shoe ##
@@ -137,18 +144,18 @@ class GameUI:
                 x=30, y=y, anchor="se", relheight=fraction, relwidth=1.0
             )
 
-    def animate_shuffle(self, shoe: Shoe, callback, TIME_DELAY):
+    def animate_shuffle(self, shoe: Shoe, time_delay):
         self.fill_discard_tray(shoe)
         self._show_shuffle()
-        self.root.after(TIME_DELAY * 2, lambda: self._finish_shuffle(callback))
+        self.delayed_ui(time_delay*2)
+        self._finish_shuffle()
 
     def _show_shuffle(self):
         self.components.shuffle.place(relx=0.45, rely=0.5, anchor="center")
         self.root.update_idletasks()
 
-    def _finish_shuffle(self, callback):
+    def _finish_shuffle(self):
         self._hide_shuffle()
-        callback()
     
     def _hide_shuffle(self):
         self.components.shuffle.place_forget()
@@ -270,6 +277,10 @@ class GameUI:
         self.components.dealer_info.configure(text=text)
 
     ############
+
+    def delayed_ui(self, time_delay):
+        """[UI]"""
+        time.sleep(time_delay)
 
     def display_finger(self, hand: Hand):
         """[UI]"""

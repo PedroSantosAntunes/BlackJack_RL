@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 import tkinter
-from PIL import Image, ImageTk
 import os
-from ..lib import Card
 from argparse import Namespace
 
 IMG_PATH = f"{os.path.dirname(__file__)}/images/"

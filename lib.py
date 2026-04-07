@@ -2,6 +2,16 @@ from dataclasses import dataclass
 import random
 import tkinter
 from typing import List, Literal
+from enum import Enum
+
+class Action(Enum):
+    HIT = 1
+    STAY = 2
+    DOUBLE = 3
+    INSURANCE = 4
+    SPLIT = 5
+    SURRENDER = 6
+    EVEN_MONEY = 7
 
 @dataclass
 class Rules:
@@ -104,18 +114,9 @@ class Shoe:
             return card
         raise ValueError("Empty shoe!")
 
-    # Used to display amount of cards in shoe in relation to the initial state
-    def fill_discard_tray(self, progress: tkinter.Label) -> None:
-        fraction = (self._n_cards_total - self.n_cards) / self._n_cards_total
-        y = self.n_decs * 20
-        if progress is not None:
-            progress.place(
-                x=30, y=y, anchor="se", relheight=fraction, relwidth=1.0
-            )
-
     # For debugging and training purpusues only
     def arrange(self, cards: list[str], randomize: bool = False):
-        """Arranges shoe so that next cards are the requested ones."""
+        """[DEBUG] Arranges shoe so that next cards are the requested ones."""
         if ";" in str(cards):
             # Choose one hand randomly from input like --cards="A,7;7,7;10,10"
             options = [
@@ -185,12 +186,19 @@ class Hand:
             self.is_triple_seven = True
             self.is_finished = True
             self.is_hittable = False
+        
         if self.sum >= 22:
             self.is_finished = True
             self.is_hittable = False
             self.is_over = True
+        
+
+        # Split hands are not considered blackjack
         if self.sum == 21 and len(self.cards) == 2 and not self.is_split_hand:
             self.is_blackjack = True
+
+        # ?? For some reason if the hand is 21 but not blackjack the round doesnt end
+        # the player still has to stand lol
 
     def __repr__(self) -> str:
         return format_hand(self.cards)
@@ -261,18 +269,13 @@ class Player:
         return hand
 
     def sort_hands(self):
+        """Sort hands by creation order"""
         self.hands.sort(key=lambda x: x.slot)  # type: ignore
 
     def _get_next_free_slot(self):
         n_hands = len(self.hands)
-        if n_hands == 0:
-            return 2
-        if n_hands == 1:
-            return 1
-        if n_hands == 2:
-            return 3
-        if n_hands == 3:
-            return 0
+        if n_hands < 4:
+            return n_hands
         raise RuntimeError("Too many hands")
 
     def init_count(self):
@@ -354,3 +357,79 @@ def get_rules(region: Literal["US", "Europe", "Helsinki"]):
     rules.region = region
     return rules
 
+
+def get_starting_hand(subset: str) -> list[str]:
+    hard_hands = [
+        "2,3",
+        "2,4",
+        "2,5",
+        "2,6",
+        "2,7",
+        "2,8",
+        "2,9",
+        "2,10",
+        "3,4",
+        "3,5",
+        "3,6",
+        "3,7",
+        "3,8",
+        "3,9",
+        "3,10",
+        "4,5",
+        "4,6",
+        "4,7",
+        "4,8",
+        "4,9",
+        "4,10",
+        "5,6",
+        "5,7",
+        "5,8",
+        "5,9",
+        "5,10",
+        "6,7",
+        "6,8",
+        "6,9",
+        "6,10",
+        "7,8",
+        "7,9",
+        "7,10",
+        "8,9",
+        "8,10",
+        "9,10",
+    ]
+    soft_hands = [
+        "A,2",
+        "A,3",
+        "A,4",
+        "A,5",
+        "A,6",
+        "A,7",
+        "A,8",
+        "A,9",
+    ]
+    pairs = [
+        "2,2",
+        "3,3",
+        "4,4",
+        "5,5",
+        "6,6",
+        "7,7",
+        "8,8",
+        "9,9",
+        "10,10",
+        "A,A",
+    ]
+    if subset == "hard":
+        cards = hard_hands
+    elif subset == "soft":
+        cards = soft_hands
+    elif subset == "pairs":
+        cards = pairs
+    elif subset == "hard/soft":
+        cards = hard_hands + soft_hands
+    elif subset == "soft/pairs":
+        cards = soft_hands + pairs
+    else:
+        raise ValueError("Bad subset")
+    card_list = random.choice(cards).split(",")
+    return card_list if random.choice([True, False]) else card_list[::-1]

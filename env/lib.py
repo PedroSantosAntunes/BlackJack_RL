@@ -177,6 +177,7 @@ class Hand:
         else:
             self.is_pair = False
 
+        # Triple Seven
         if (
             len(self.cards) == 3
             and all(card.label == "7" for card in self.cards)
@@ -187,6 +188,7 @@ class Hand:
             self.is_finished = True
             self.is_hittable = False
         
+        # Bust
         if self.sum >= 22:
             self.is_finished = True
             self.is_hittable = False
@@ -300,6 +302,14 @@ class Player:
         elif isinstance(card.value, int) and card.value <= 6:
             self.count.running_count += 1
         card.counted = True
+
+
+    def all_hands_done(self):
+        for hand in self.hands:
+            if not hand.is_finished:
+                return False
+
+        return True
 
 # Calculates the hand value and if the hand is hard (has an Ace counted as 11)
 def evaluate_hand(cards: list) -> tuple:

@@ -2,16 +2,17 @@ from dataclasses import dataclass
 import tkinter
 import os
 from argparse import Namespace
-
-IMG_PATH = f"{os.path.dirname(__file__)}/images/"
+from env.lib import Card
+from PIL import Image, ImageTk
 
 FOREGROUND = "white"
 
 
 class TableComponents:
-    def __init__(self, root: tkinter.Tk, background: str) -> None:
+    def __init__(self, root: tkinter.Tk, background: str, img_path) -> None:
         self.root = root
         self.background = background
+        self.img_path = img_path
         self._x_slot = 250
         self._padding_left = 20
         self.dealer_info: tkinter.Label
@@ -43,15 +44,6 @@ class TableComponents:
             relief="ridge",
         )
         rect.place(x=525, y=485)
-        _round_polygon(
-            rect,
-            [5, 75, 75, 5],
-            [5, 5, 90, 90],
-            10,
-            width=4,
-            outline="#bbb500",
-            fill=self.background,
-        )
 
     def set_side_panel(self) -> None:
         panel = tkinter.Label(
@@ -177,7 +169,7 @@ class TableComponents:
 
     def get_dealer_slot(self):
         n_cards_max = 11
-        card_back_img, _, _ = get_image()
+        card_back_img, _, _ = self.get_image()
         slot_dealer = {
             f"{str(pos)}": tkinter.Label(
                 self.root, borderwidth=0, background=self.background
@@ -240,6 +232,34 @@ class TableComponents:
         slider.place(x=side_panel_position + 40, y=140)
         bet_label.place(x=side_panel_position, y=160)
         self.slider = slider
+
+    def get_image(
+        self,
+        card: Card | None = None,
+        width: int = 100,
+        height: int = 130,
+        rotate: bool = False,
+    ):
+        if card is None:
+            filename = f"{self.img_path}/back.png"
+        else:
+            mapping = {
+                "A": "ace",
+                "J": "jack",
+                "Q": "queen",
+                "K": "king",
+            }
+            prefix = mapping.get(card.label, card.value)
+            filename = f"{self.img_path}/{prefix}_of_{card.suit}.png"
+        image = Image.open(filename).resize(
+            (width, height), Image.Resampling.LANCZOS
+        )
+        if rotate is True:
+            image = image.resize((height, height))
+            image = image.rotate(angle=90)
+            image = image.resize((height, width))
+            width, height = height, width
+        return ImageTk.PhotoImage(image), width, height
 
 
 @dataclass

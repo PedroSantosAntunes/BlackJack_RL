@@ -5,13 +5,13 @@ from typing import List, Literal
 from enum import Enum
 
 class Action(Enum):
-    HIT = 1
-    STAY = 2
-    DOUBLE = 3
-    INSURANCE = 4
-    SPLIT = 5
-    SURRENDER = 6
-    EVEN_MONEY = 7
+    HIT = 0
+    STAY = 1
+    DOUBLE = 2
+    INSURANCE = 3
+    SPLIT = 4
+    SURRENDER = 5
+    EVEN_MONEY = 6
 
 @dataclass
 class Rules:
@@ -30,6 +30,12 @@ class Rules:
 class Count:
     running_count: int
     true_count: float
+
+@dataclass
+class HandPayout:
+    reward: float = 0.0
+    profit: float = 0.0
+    label: str = ""
 
 # Card that holds label, suit and value
 class Card:
@@ -201,6 +207,9 @@ class Hand:
 
         # ?? For some reason if the hand is 21 but not blackjack the round doesnt end
         # the player still has to stand lol
+
+        self.played = (len(self.cards) > 2)
+
 
     def __repr__(self) -> str:
         return format_hand(self.cards)
